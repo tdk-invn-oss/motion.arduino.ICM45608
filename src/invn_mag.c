@@ -17,8 +17,9 @@
 
 #include "invn_mag.h"
 
-/* Driver */
+#if defined(ICM45608) || defined(ICM45689)
 #include "imu/inv_imu_edmp_mrm.h"
+#endif
 
 /* Magnetometer drivers */
 #include "Ict1531x/Ict1531x.h"
@@ -136,6 +137,17 @@ int invn_read_whoami(inv_imu_device_t *s)
     return data;
 }
 
+
+int invn_mag_enable(int flag)
+{
+	int rc = 0;
+
+	rc |= inv_ict1531x_enable_sensor(&mag_dev, flag);
+
+	return rc;
+}
+
+
 int invn_mag_init(inv_imu_device_t *s)
 {
 	int                       rc = 0;
@@ -145,7 +157,7 @@ int invn_mag_init(inv_imu_device_t *s)
 
 	self = s;
 
-	rc |= inv_imu_init_i2cm(s);
+    rc |= inv_imu_init_i2cm(s);
 
 	/* Enable I2C master done IRQ, to get data from IRQ and inv_imu_get_i2cm_data()
 	 * for initial mag configuration, until eDMP is enabled */
@@ -188,7 +200,6 @@ int invn_mag_init(inv_imu_device_t *s)
 	rc |= inv_imu_get_config_int(s, INV_IMU_INT1, &int1_config);
 	int1_config.INV_I2CM_DONE = INV_IMU_DISABLE;
 	rc |= inv_imu_set_config_int(s, INV_IMU_INT1, &int1_config);
-
 	{
 		/* I2CM device profile[2] = [Read addr, deviceID] */
 		const uint8_t i2cm_dev_prof[2] = { ICT1531X_STATUS_REG, MAG_I2C_ADDR };
@@ -206,10 +217,10 @@ int invn_mag_init(inv_imu_device_t *s)
 		inv_imu_write_reg(s, I2CM_WR_DATA0, sizeof(i2cm_wrb), i2cm_wrb);
 		inv_imu_write_reg(s, I2CM_COMMAND_1, sizeof(i2cm_cmd1), &i2cm_cmd1);
 	}
-
 	return rc;
 }
 
+#if defined(ICM45608) || defined(ICM45689)
 int invn_mag_load_ram_image(inv_imu_device_t *s, invn_mag_usecase_t usecase)
 {
 	int rc = 0;
@@ -248,6 +259,7 @@ int invn_mag_disable_automrm(inv_imu_device_t *s)
 
 	return rc;
 }
+#endif /* defined(ICM45608) || defined(ICM45689) */
 
 uint64_t inv_ict1531x_get_time_us(void)
 {

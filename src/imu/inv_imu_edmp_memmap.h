@@ -377,10 +377,11 @@ extern "C" {
 /* gaf_config_mag_softiron_matrix
  *
  * A q30 3x3 matrix applied to input mag data
- * Default:Identity matrix being
+ * Important: Because the default value is all zero's, it is expected to set it at least to Identity matrix in order to get magnetometer data:
  * 0x40000000      0           0
  *     0       0x40000000      0
  *     0           0       0x40000000
+ * Soft-iron will be estimated on the final platform and the computed value (often different from Identity matrix) will need to be applied.
  */
 #define EDMP_GAF_CONFIG_MAG_SOFTIRON_MATRIX                     0x264
 #define EDMP_GAF_CONFIG_MAG_SOFTIRON_MATRIX_SIZE                36
@@ -563,6 +564,24 @@ extern "C" {
  */
 #define EDMP_GAF_SAVED_MAG_BIAS_UT_Q16                          0x774
 #define EDMP_GAF_SAVED_MAG_BIAS_UT_Q16_SIZE                     12
+
+/* gaf_mag_bias_scaled_ut_q11
+ *
+ * Magnetometer bias to start algorithm with (one value per axis).
+ * Unit: uT in s32q11
+ * Default: 0;0;0
+ */
+#define EDMP_GAF_MAG_BIAS_SCALED_UT_Q11                         0x780
+#define EDMP_GAF_MAG_BIAS_SCALED_UT_Q11_SIZE                    12
+
+/* gaf_mag_bias_selected_scaled_ut_q11
+ *
+ * Magnetometer bias to start algorithm with (one value per axis).
+ * Unit: uT in s32q11
+ * Default: 0;0;0
+ */
+#define EDMP_GAF_MAG_BIAS_SELECTED_SCALED_UT_Q11                0x78c
+#define EDMP_GAF_MAG_BIAS_SELECTED_SCALED_UT_Q11_SIZE           12
 
 /* gaf_read_mag_bias_ut_q16
  *
@@ -819,6 +838,14 @@ extern "C" {
 #define EDMP_SIF_PDR_PARTITION                                  0x138
 #define EDMP_SIF_PDR_PARTITION_SIZE                             4
 
+/* sif_interrupt_control
+ *
+ * SIF interrupt control: repeated interrupt even if sif_class_index has not changed (0) or only trigger interrupt if sif_class_index has changed (1).
+ * Default: 0
+ */
+#define EDMP_SIF_INTERRUPT_CONTROL                              0x1c3
+#define EDMP_SIF_INTERRUPT_CONTROL_SIZE                         1
+
 /* sif_class_index
  *
  * Index of SIF predicted gesture class.
@@ -841,7 +868,7 @@ extern "C" {
  * Size of the analysis window to detect tap events (single, double or triple tap)
  * Unit: time in sample number
  * Range: [49 - 496]
- * Default : 198 (set for default ODR = 400 Hz, equivalent to 0.495 s)
+ * Default : 248 (set for default ODR = 400 Hz, equivalent to 0.620 s)
  */
 #define EDMP_TAP_TMAX                                           0x232
 #define EDMP_TAP_TMAX_SIZE                                      2

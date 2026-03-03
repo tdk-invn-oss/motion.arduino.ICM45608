@@ -69,6 +69,9 @@ int invn_mag_enable_automrm(inv_imu_device_t *s);
  */
 int invn_mag_disable_automrm(inv_imu_device_t *s);
 
+int invn_mag_enable(int flag);
+
+
 #ifdef __cplusplus
 }
 #endif

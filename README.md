@@ -193,7 +193,7 @@ Raw data can be translated to International System using the configured FSR for 
 
 **int startGaf(uint8_t intpin, ICM456xx_irq_handler handler);**
 
-This method initializes the Newport eDMP with GAF algorithm and set the interrupt of the ICM456xx. The interrupt is triggered each time a Quaternion computation is available in the fifo and the provided handler is called.
+This method initializes the eDMP with GAF algorithm and set the interrupt of the ICM456xx. The interrupt is triggered each time a Quaternion computation is available in the fifo and the provided handler is called.
 Any interuptable pin of the Arduino can be used for intpin.
 It return 0 on success.
 
@@ -454,8 +454,33 @@ IMU.startTiltDetection();
 // Enable interrupt
 IMU.setApexInterrupt(2, irq_handler);
 ```
+**int setI2CMPassThrough(void)**
+
+This method set the AUX1 in I2CM bypass mode when the host is not in SPI. (Host can in I3C/I2C)
+
+**int setI2CM(void)**
+
+This method set the AUX1 in I2C master mode. (Host can in I3C/I2C/SPI)
+The I2CM operation can be triggered by user-set external sensor ODR or by on-demand request from the host.
+
+**int getDataFromI2CM(uint8_t reg, uint8_t& data)**
+
+When the AUX1 is in I2CM mode, ths host on AP interface can access external sensor by I2CM.
+
+**int getDataFromPassThrough(uint8_t reg, uint8_t& data)**
+
+When the I2CM is in pass-through mode, the host on AP interface can access external sensor directly.
+
 
 # Available Sketches
+
+**AUX_PassThrough**
+
+This sketch initializes the ICM456xx with the I2C interface, and running the AUX1 to I2CM Pass-Through mode. Register value from external sensor can be monitored on Serial monitor
+
+**AUX_I2C**
+
+This sketch initializes the ICM456xx with the I2C interface, and running the AUX1 to I2CM mode. Register value from external sensor can be monitored on Serial monitor
 
 **Polling_I2C**
 

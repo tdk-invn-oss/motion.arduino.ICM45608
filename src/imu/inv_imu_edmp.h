@@ -76,6 +76,8 @@ typedef struct {
 	uint8_t INV_GAF_MRM_THR;
 	uint8_t INV_SELF_TEST;
 	uint8_t INV_SEC_AUTH;
+	uint8_t INV_AID_HUMAN;
+	uint8_t INV_AID_DEVICE;
 } inv_imu_edmp_int_state_t;
 
 /** Registers to retrieve interrupts status for APEX. */
@@ -176,7 +178,7 @@ typedef enum {
 } inv_imu_edmp_gaf_frame_type_t;
 
 /** @brief IMU GAF inputs parameters definition
- *  @note Refer to the datasheet for details on how to configure these parameters.
+ *  @note Refer to the datasheet and appnote for details on how to configure these parameters.
  */
 typedef struct {
 	uint8_t  run_spherical;
@@ -220,6 +222,10 @@ typedef struct {
 	int32_t  mag_thr_min_radius;
 	int32_t  mag_thr_lock_acc;
 	int16_t  mag_calibration_condition;
+
+	/* Parameters below are used only if edmp_prgm_ram_patch_calmag RAM image is used by current driver */
+	int32_t  mag_fast_covariance_conv_thr;
+	int32_t  mag_stuck_covariance_conv_thr;
 } inv_imu_edmp_gaf_parameters_t;
 
 /** @brief Auto MRM states. 
@@ -336,6 +342,13 @@ typedef struct {
 	/*======================== Algo ODR ========================*/
 	uint32_t sif_odr;
 } inv_imu_edmp_sif_user_config_t;
+
+typedef enum {
+	SIF_INTERRUPT_ASSERTED_ALWAYS =
+	    0, /**< SIF interrupt is always asserted at the end of the window */
+	SIF_INTERRUPT_ASSERTED_ON_CHANGE =
+	    1, /**< SIF interrupt is only asserted if the classification result changed at the end of the window */
+} inv_imu_edmp_sif_int_mode_t;
 
 /** @brief Configure EDMP Output Data Rate.
  *  @warning Accel frequency must be higher or equal to EDMP frequency.
@@ -524,6 +537,14 @@ int inv_imu_edmp_set_sif_model(inv_imu_device_t *s, const inv_imu_edmp_sif_user_
  *  @return           0 on success, negative value on error.
  */
 int inv_imu_edmp_set_sif_pdr(inv_imu_device_t *s, uint32_t pdr);
+
+/** @brief  Configure APEX SIF interrupt behavior at the end of the observation window.
+ *  @param[in] s        Pointer to device.
+ *  @param[in] int_mode Control condition for asserting interrupt at the end of SIF classification window (@sa inv_imu_edmp_sif_int_mode_t)
+ *  @return             0 on success, negative value on error.
+ */
+int inv_imu_edmp_set_sif_int_control(inv_imu_device_t *                s,
+                                     const inv_imu_edmp_sif_int_mode_t int_mode);
 
 /** @brief  Apply a mounting-matrix at EDMP level, on all input data (axis remapping)
  *  @param[in] s                Pointer to device.

@@ -19,6 +19,8 @@
 #include "imu/inv_imu_edmp_defs.h"
 #include "imu/inv_imu_edmp_algo_defs.h"
 #include "imu/inv_imu_edmp_patches_defs.h"
+#include "imu/inv_imu_edmp_patch_key_offsets.h"
+#include "imu/inv_imu_edmp_calmag_defs.h"
 
 /* FIFO frame type definition */
 typedef struct {
@@ -427,6 +429,15 @@ int inv_imu_edmp_get_gaf_parameters(inv_imu_device_t *s, inv_imu_edmp_gaf_parame
 	                                 (uint8_t *)&gaf_params->mag_thr_lock_acc);
 	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_GAF_CONFIG_MAG_CALIBRATION_CONDITION,
 	                                 (uint8_t *)&gaf_params->mag_calibration_condition);
+	/* These parameters come from the SRAM calmag image, which is
+	 * loaded by the `inv_imu_edmp_set_gaf_parameters` API. There
+	 * is no way to know if the image was already loaded when 
+	 * this API is called. The decision is therefore to return
+	 * the default values here, caller will update them before
+	 * calling the `inv_imu_edmp_set_gaf_parameters` API.
+	 */
+	gaf_params->mag_fast_covariance_conv_thr  = EDMP_MAG_FAST_COVARIANCE_CONV_THR_DEFAULT;
+	gaf_params->mag_stuck_covariance_conv_thr = EDMP_MAG_STUCK_COVARIANCE_CONV_THR_DEFAULT;
 
 	return status;
 }
@@ -443,6 +454,10 @@ int inv_imu_edmp_set_gaf_parameters(inv_imu_device_t *                   s,
 	dmp_ext_sen_odr_cfg_apex_odr_t dmp_odr;
 	const void *                   gaf_pdr_array;
 	uint32_t                       accuracy;
+	uint32_t                       key;
+	static const uint8_t           img[] = {
+#include "imu/edmp_prgm_ram_patch_calmag.h"
+	};
 
 	status |= inv_imu_read_reg(s, ACCEL_CONFIG0, 1, (uint8_t *)&accel_config0);
 	switch (accel_config0.accel_odr) {
@@ -586,6 +601,17 @@ int inv_imu_edmp_set_gaf_parameters(inv_imu_device_t *                   s,
 	status |= inv_imu_edmp_mask_int_src(s, INV_IMU_EDMP_INT1, EDMP_INT_SRC_ON_DEMAND_MASK);
 	status |= inv_imu_edmp_disable(s);
 
+	/* Preload patch image and enable covariance patch since it will always be required */
+	status |= inv_imu_write_sram(s, RAM_CALMAG_IMG_PRGM_BASE, sizeof(img), img);
+	(void)memcpy(&key, img + RAM_CALMAG_IMG_PART4_ACCEPTANCE_PATCH_KEY_OFFSET, sizeof(key));
+	status |= inv_imu_write_sram(s, EDMP_INVN_ALGO_GAF_PATCH_POINT_RLS_MAG_PART4_ACCEPTANCE,
+	                             sizeof(key), (uint8_t *)&key);
+	/* Adjust calmag SRAM image parameters */
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_MAG_FAST_COVARIANCE_CONV_THR,
+	                                  (uint8_t *)&gaf_params->mag_fast_covariance_conv_thr);
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_MAG_STUCK_COVARIANCE_CONV_THR,
+	                                  (uint8_t *)&gaf_params->mag_stuck_covariance_conv_thr);
+
 	/* Init gyro biases temperature to -273 C if accuracy level is low (0) */
 	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_GAF_SAVED_GYR_ACCURACY, (uint8_t *)&accuracy);
 	if (accuracy == 0) {
@@ -688,15 +714,10 @@ int inv_imu_edmp_set_gaf_parameters(inv_imu_device_t *                   s,
 
 		/* All cases with GAF PDR 200Hz and mag is ON request a specific RAM image to achieve such PDR */
 		if ((status == INV_IMU_OK) && (gaf_params->mag_dt_us != 0)) {
-			uint32_t             key;
-			static const uint8_t img[] = {
-#include "imu/edmp_prgm_ram_patch_calmag.h"
-			};
-			status |= inv_imu_write_sram(s, RAM_CALMAG_HIGHPDR_IMG_PRGM_BASE, sizeof(img), img);
-			(void)memcpy(&key, img, sizeof(key));
+			(void)memcpy(&key, img + RAM_CALMAG_IMG_CHUNK6_PATCH_KEY_OFFSET, sizeof(key));
 			status |= inv_imu_write_sram(s, EDMP_INVN_ALGO_GAF_PATCH_POINT_BEFORE_MAG_CHUNK6,
 			                             sizeof(key), (uint8_t *)&key);
-			(void)memcpy(&key, img + 4, sizeof(key));
+			(void)memcpy(&key, img + RAM_CALMAG_IMG_CHUNK7_PATCH_KEY_OFFSET, sizeof(key));
 			status |= inv_imu_write_sram(s, EDMP_INVN_ALGO_GAF_PATCH_POINT_BEFORE_MAG_CHUNK7,
 			                             sizeof(key), (uint8_t *)&key);
 		}
@@ -825,6 +846,7 @@ int inv_imu_edmp_set_gaf_mag_bias(inv_imu_device_t *s, const int32_t mag_bias_q1
 	int      status           = INV_IMU_OK;
 	uint32_t cov_max_selected = EDMP_COV_MAX_SELECTED_ACCURACY_0;
 	uint32_t accuracy32;
+	int32_t  scaled_bias_mag[3];
 
 	status |=
 	    INV_IMU_WRITE_EDMP_SRAM(s, EDMP_GAF_SAVED_MAG_BIAS_UT_Q16, (const uint8_t *)mag_bias_q16);
@@ -840,6 +862,15 @@ int inv_imu_edmp_set_gaf_mag_bias(inv_imu_device_t *s, const int32_t mag_bias_q1
 		cov_max_selected = EDMP_COV_MAX_SELECTED_ACCURACY_1;
 	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_GAF_SAVED_MAG_ACCURACY_COVARIANCE,
 	                                  (const uint8_t *)&cov_max_selected);
+
+	/* Set internal biases as well to avoid accuracy reset when large biases are to be loaded */
+	scaled_bias_mag[0] = mag_bias_q16[0] >> EDMP_MAG_BIAS_SHIFT;
+	scaled_bias_mag[1] = mag_bias_q16[1] >> EDMP_MAG_BIAS_SHIFT;
+	scaled_bias_mag[2] = mag_bias_q16[2] >> EDMP_MAG_BIAS_SHIFT;
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_GAF_MAG_BIAS_SCALED_UT_Q11,
+	                                  (const uint8_t *)scaled_bias_mag);
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_GAF_MAG_BIAS_SELECTED_SCALED_UT_Q11,
+	                                  (const uint8_t *)scaled_bias_mag);
 
 	return status;
 }
@@ -1009,6 +1040,15 @@ int inv_imu_edmp_set_sif_pdr(inv_imu_device_t *s, uint32_t pdr)
 	return status;
 }
 
+int inv_imu_edmp_set_sif_int_control(inv_imu_device_t *                s,
+                                     const inv_imu_edmp_sif_int_mode_t int_mode)
+{
+	int status = INV_IMU_OK;
+	status |= inv_imu_write_sram(s, EDMP_SIF_INTERRUPT_CONTROL, EDMP_SIF_INTERRUPT_CONTROL_SIZE,
+	                             (uint8_t *)&int_mode);
+	return status;
+}
+
 int inv_imu_edmp_set_mounting_matrix(inv_imu_device_t *s, const int8_t mounting_matrix[9])
 {
 	int           status                  = INV_IMU_OK;
@@ -1046,6 +1086,8 @@ int inv_imu_edmp_get_config_int_apex(inv_imu_device_t *s, inv_imu_edmp_int_state
 	it->INV_GAF_MRM_THR = !cfg.int_apex_config1.int_status_mask_pin_ext4_det;
 	it->INV_SELF_TEST   = !cfg.int_apex_config1.int_status_mask_pin_selftest_done;
 	it->INV_SEC_AUTH    = !cfg.int_apex_config1.int_status_mask_pin_sa_done;
+	it->INV_AID_HUMAN   = !cfg.int_apex_config1.int_status_mask_pin_ext5_det;
+	it->INV_AID_DEVICE  = !cfg.int_apex_config1.int_status_mask_pin_ext6_det;
 
 	return status;
 }
@@ -1070,6 +1112,8 @@ int inv_imu_edmp_set_config_int_apex(inv_imu_device_t *s, const inv_imu_edmp_int
 	cfg.int_apex_config1.int_status_mask_pin_ext4_det      = !it->INV_GAF_MRM_THR;
 	cfg.int_apex_config1.int_status_mask_pin_selftest_done = !it->INV_SELF_TEST;
 	cfg.int_apex_config1.int_status_mask_pin_sa_done       = !it->INV_SEC_AUTH;
+	cfg.int_apex_config1.int_status_mask_pin_ext5_det      = !it->INV_AID_HUMAN;
+	cfg.int_apex_config1.int_status_mask_pin_ext6_det      = !it->INV_AID_DEVICE;
 
 	status |= inv_imu_write_reg(s, INT_APEX_CONFIG0, 2, (uint8_t *)&cfg);
 
@@ -1330,6 +1374,8 @@ int inv_imu_edmp_get_int_apex_status(inv_imu_device_t *s, inv_imu_edmp_int_state
 	it->INV_GAF_MRM_THR = st.int_apex_status1.int_status_ext4_det;
 	it->INV_SELF_TEST   = st.int_apex_status1.int_status_selftest_done;
 	it->INV_SEC_AUTH    = st.int_apex_status1.int_status_sa_done;
+	it->INV_AID_HUMAN   = st.int_apex_status1.int_status_ext5_det;
+	it->INV_AID_DEVICE  = st.int_apex_status1.int_status_ext6_det;
 
 	return status;
 }
@@ -1650,11 +1696,6 @@ int inv_imu_edmp_gaf_decode_fifo(inv_imu_device_t *s, const uint8_t es0[9], cons
 		out->rmag[2]    = es1[1] + ((int32_t)es1[2] << 8);
 		out->rmag_valid = stA->rmag_valid;
 
-		out->hr_g[0]    = hr_gxy->gx;
-		out->hr_g[1]    = hr_gxy->gy;
-		out->hr_g[2]    = hr_gz->gz;
-		out->hr_g_valid = 1;
-
 		out->frame_complete = 1;
 		break;
 
@@ -1672,11 +1713,6 @@ int inv_imu_edmp_gaf_decode_fifo(inv_imu_device_t *s, const uint8_t es0[9], cons
 
 		out->mrm_state       = (inv_imu_auto_mrm_state_t)stB->mrm_state;
 		out->mrm_state_valid = 1;
-
-		out->hr_g[0]    = hr_gxy->gx;
-		out->hr_g[1]    = hr_gxy->gy;
-		out->hr_g[2]    = hr_gz->gz;
-		out->hr_g_valid = 1;
 
 		out->frame_complete = 0;
 		break;

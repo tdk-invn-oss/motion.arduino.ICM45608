@@ -14,18 +14,40 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+ 
+#include "ICM45608.h"
 
-#ifndef _INV_IMU_VERSION_H_
-#define _INV_IMU_VERSION_H_
+// Instantiate an ICM456XX with LSB address set to 0
+ICM456xx IMU(Wire,0);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define ICT1531X_CHIP_ID_REG  0x01
+volatile uint8_t irq_received = 0;
 
-#define INV_IMU_VERSION_STRING "1.1.0"
+void setup() {
+  int ret;
+  uint8_t data;
+  
+  Serial.begin(115200);
+  while(!Serial) {}
 
-#ifdef __cplusplus
+  // Initializing the ICM456XX
+  ret = IMU.begin();
+  if (ret != 0) {
+    Serial.print("ICM456xx initialization failed: ");
+    Serial.println(ret);
+    while(1);
+  }
+  
+  delay(2000);
+  ret = IMU.setI2CM();
+  ret |= IMU.getDataFromI2CM(ICT1531X_CHIP_ID_REG, data);
+  Serial.print("Read data: ");  
+  Serial.println(data);
 }
-#endif
 
-#endif /* _INV_IMU_VERSION_H_ */
+void loop() {
+  // Wait for interrupt to read data from fifo
+  if(irq_received) {
+    irq_received = 0;
+  }
+}

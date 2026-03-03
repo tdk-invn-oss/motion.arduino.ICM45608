@@ -18,7 +18,7 @@
 #include "imu/inv_imu_selftest.h"
 #include "imu/inv_imu_edmp.h"
 #include "imu/inv_imu_edmp_defs.h"
-#include "imu/edmp_data_ram_selftest_map.h"
+#include "imu/inv_imu_edmp_ram_selftest_memmap.h"
 
 /* Static functions definition */
 static int set_selftest_parameters(inv_imu_device_t *                   s,
@@ -120,8 +120,8 @@ static int set_selftest_parameters(inv_imu_device_t *                   s,
 	tmp_stc_params |= (uint32_t)(st_params->accel_limit & SELFTEST_ACCEL_THRESH_MASK);
 	tmp_stc_params |= (uint32_t)(st_params->gyro_limit & SELFTEST_GYRO_THRESH_MASK);
 	tmp_stc_params |= (uint32_t)(st_params->avg_time & SELFTEST_AVERAGE_TIME_MASK);
-	rc |= inv_imu_write_sram(s, EDMP_ram_selftest_state_configParams,
-	                         EDMP_ram_selftest_state_configParams_size, (uint8_t *)&tmp_stc_params);
+	rc |= inv_imu_write_sram(s, EDMP_STC_CONFIGPARAMS, EDMP_STC_CONFIGPARAMS_SIZE,
+	                         (uint8_t *)&tmp_stc_params);
 
 	return rc;
 }
@@ -174,8 +174,7 @@ static int get_selftest_output(inv_imu_device_t *s, const inv_imu_selftest_param
 	uint32_t stc_results;
 
 	/* Read self-test results */
-	rc |= inv_imu_read_sram(s, EDMP_ram_selftest_state_results,
-	                        EDMP_ram_selftest_state_results_size, (uint8_t *)&stc_results);
+	rc |= inv_imu_read_sram(s, EDMP_STC_RESULT, EDMP_STC_RESULT_SIZE, (uint8_t *)&stc_results);
 
 	if (!st_params->accel_en) {
 		st_output->accel_status = INV_IMU_ST_STATUS_NOT_RUN;

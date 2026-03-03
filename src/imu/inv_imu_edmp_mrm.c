@@ -19,6 +19,7 @@
 #include "imu/inv_imu_edmp.h"
 #include "imu/inv_imu_edmp_defs.h"
 #include "imu/inv_imu_edmp_patches_defs.h"
+#include "imu/inv_imu_edmp_ram_mrm_memmap.h"
 
 #define GAF_MODE_BITMASK_MRM_ENABLE 0x4
 
@@ -37,6 +38,37 @@ int inv_imu_edmp_mrm_init(inv_imu_device_t *s, inv_imu_edmp_mrm_init_t usecase)
 	status |= inv_imu_write_sram(s, RAM_MRM_IMG_DATA_BASE, sizeof(ram_img), ram_img);
 	status |= inv_imu_write_sram(s, EDMP_INVN_ALGO_MRM_PATCH_POINT_DISPATCH, 4,
 	                             (uint8_t *)&ram_mrm_img_start_addr);
+
+	return status;
+}
+
+
+int inv_imu_edmp_mrm_get_parameters(inv_imu_device_t *s, inv_imu_edmp_mrm_parameters_t *p)
+{
+	int status = INV_IMU_OK;
+
+	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_MRM_COARSE_STAB_CNT_THR, (uint8_t *)&p->mrm_coarse_stab_cnt_thr);
+	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_MRM_FINE_STAB_CNT_THR, (uint8_t *)&p->mrm_fine_stab_cnt_thr);
+	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_MRM_LARGE_INSTABILITY_CNT, (uint8_t *)&p->mrm_large_instability_cnt);
+	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_MRM_SMALL_INSTABILITY_CNT, (uint8_t *)&p->mrm_small_instability_cnt);
+	status |= INV_IMU_READ_EDMP_SRAM(s, EDMP_MRM_STAB_OBS_WINDOW_CNT, (uint8_t *)&p->mrm_stab_obs_window_cnt);
+
+	return status;
+}
+
+int inv_imu_edmp_mrm_set_parameters(inv_imu_device_t *s, const inv_imu_edmp_mrm_parameters_t *p)
+{
+	int status = INV_IMU_OK;
+
+	/* DMP cannot be configured if it is running, hence make sure RAM MRM algorithm is off */
+	if (s->edmp_gaf_mode & GAF_MODE_BITMASK_MRM_ENABLE)
+		return INV_IMU_ERROR;
+
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_MRM_COARSE_STAB_CNT_THR, (uint8_t *)&p->mrm_coarse_stab_cnt_thr);
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_MRM_FINE_STAB_CNT_THR, (uint8_t *)&p->mrm_fine_stab_cnt_thr);
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_MRM_LARGE_INSTABILITY_CNT, (uint8_t *)&p->mrm_large_instability_cnt);
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_MRM_SMALL_INSTABILITY_CNT, (uint8_t *)&p->mrm_small_instability_cnt);
+	status |= INV_IMU_WRITE_EDMP_SRAM(s, EDMP_MRM_STAB_OBS_WINDOW_CNT, (uint8_t *)&p->mrm_stab_obs_window_cnt);
 
 	return status;
 }
