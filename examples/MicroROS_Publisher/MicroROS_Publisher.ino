@@ -84,7 +84,7 @@ void setup() {
   set_microros_transports();
   delay(2000);
 
-  // Initializing the ICM42670P
+  // Initializing the IMU
   RCCHECK(IMU.begin());
 
   // Start GAF algo with interrupt on pin 2

@@ -49,8 +49,11 @@ void setup() {
   IMU.startHighG();
   // APEX LowG enabled    
   IMU.startLowG();
+  // APEX Bring to See enabled    
+  IMU.startB2S();
 
   IMU.setApexInterrupt(2,irq_handler);
+  IMU.startAPEX();
 }
 
 void loop() {
@@ -60,6 +63,7 @@ void loop() {
     uint8_t tap_count=0;
     uint8_t axis=0;
     uint8_t direction=0;
+    int ret = 0;
     
     uint32_t duration_ms;  
     if(IMU.getFreefall(duration_ms) == 1)
@@ -73,6 +77,12 @@ void loop() {
 
     if(IMU.getLowG() == 1)
       Serial.print(" LowG Event");
+
+    ret = IMU.getB2S();
+    if(ret == 1)
+      Serial.print(" B2S Event");
+    if(ret == 2)
+      Serial.print(" B2S Rev Event");
 
     if(IMU.getTap(tap_count,axis,direction) == 1)
     {
