@@ -66,15 +66,9 @@ int inv_imu_adv_device_reset(inv_imu_device_t *s)
 
 	status |= inv_imu_soft_reset(s);
 
-	/* Read endianness for further processing */
-	status |= inv_imu_get_endianness(s); /* Set `endianness_data` variable */
-
 	/* Set default FIFO configuration */
 	e->fifo_is_used = INV_IMU_DISABLE; /* FIFO disabled by default */
 	e->fifo_comp_en = INV_IMU_DISABLE; /* FIFO compression disabled by default */
-
-	/* From driver layer */
-	s->fifo_frame_size = 0; /* Init at 0 by default */
 
 	/* Initialize FIFO compression variables */
 	status |= init_fifo_compression(s);

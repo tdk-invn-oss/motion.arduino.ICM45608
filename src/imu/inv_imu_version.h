@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#define INV_IMU_VERSION_STRING "1.1.0"
+#define INV_IMU_VERSION_STRING "2.0.0-rc1"
 
 #ifdef __cplusplus
 }

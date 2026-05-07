@@ -224,8 +224,8 @@ typedef struct {
 	int16_t  mag_calibration_condition;
 
 	/* Parameters below are used only if edmp_prgm_ram_patch_calmag RAM image is used by current driver */
-	int32_t  mag_fast_covariance_conv_thr;
-	int32_t  mag_stuck_covariance_conv_thr;
+	int32_t mag_fast_covariance_conv_thr;
+	int32_t mag_stuck_covariance_conv_thr;
 } inv_imu_edmp_gaf_parameters_t;
 
 /** @brief Auto MRM states. 
@@ -552,6 +552,13 @@ int inv_imu_edmp_set_sif_int_control(inv_imu_device_t *                s,
  *  @return                     0 on success, negative value on error.
  */
 int inv_imu_edmp_set_mounting_matrix(inv_imu_device_t *s, const int8_t mounting_matrix[9]);
+
+/** @brief  Apply a mounting-matrix at EDMP level, on all input data
+ *  @param[in] s                Pointer to device.
+ *  @param[in] mounting_matrix  Mounting-matrix composed of s16q14 values.
+ *  @return                     0 on success, negative value on error.
+ */
+int inv_imu_edmp_set_s16q14_mounting_matrix(inv_imu_device_t *s, const int16_t mounting_matrix[9]);
 
 /** @brief Retrieve interrupts configuration.
  *  @param[in] s    Pointer to device.

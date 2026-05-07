@@ -53,6 +53,13 @@ int inv_imu_soft_reset(inv_imu_device_t *s)
 	/* Restore INTF_CONFIG1_OVRD register */
 	status |= inv_imu_write_reg(s, INTF_CONFIG1_OVRD, 1, (uint8_t *)&intf_config1_ovrd);
 
+	/* Reset driver internal states */
+	s->fifo_frame_size = 0; /* Init at 0 by default */
+	s->edmp_gaf_mode   = 0;
+
+	/* Read endianness for further processing */
+	status |= inv_imu_get_endianness(s);
+
 	/* Clear the RESET_DONE interrupt */
 	status |= inv_imu_read_reg(s, INT1_STATUS0, 1, (uint8_t *)&int1_status0);
 	if (int1_status0.int1_status_reset_done != 1)
@@ -637,6 +644,20 @@ void inv_imu_remap_data(int16_t data[3], const int8_t mmatrix[9])
 	data[0] = data_out[0];
 	data[1] = data_out[1];
 	data[2] = data_out[2];
+}
+
+void inv_imu_rotate_data(int16_t data[3], const int16_t mmatrix[9])
+{
+	uint8_t i;
+	int32_t data_out[3] = { 0 };
+	for (i = 0; i < 3; i++) {
+		data_out[i] = (int32_t)data[0] * (int32_t)mmatrix[(i * 3) + 0];
+		data_out[i] += (int32_t)data[1] * (int32_t)mmatrix[(i * 3) + 1];
+		data_out[i] += (int32_t)data[2] * (int32_t)mmatrix[(i * 3) + 2];
+	}
+	data[0] = (int16_t)(data_out[0] >> 14);
+	data[1] = (int16_t)(data_out[1] >> 14);
+	data[2] = (int16_t)(data_out[2] >> 14);
 }
 
 const char *inv_imu_get_version(void)

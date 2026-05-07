@@ -20,27 +20,14 @@
 #include "imu/inv_imu_edmp_defs.h"
 #include "imu/inv_imu_edmp_ext_features_memmap.h"
 #include "imu/inv_imu_edmp_patches_defs.h"
-
-/** Value to be written in RAM in EDMP_RAM_FEATURE_PRGM_RAM_BASE to jump to
- *  edmp_prgm_ram_dispatch.h entry point when this patch point is hit by EDMP */
-#define PATCH_KEY_OVER_SIF ( (uint32_t)0x000070f1 | \
-	                        ((uint32_t)(RAM_DISPATCH_PRGM_BASE & 0xFF00) << 8) | \
-	                        ((uint32_t)(RAM_DISPATCH_PRGM_BASE & 0x00FF) \
-	                        << 24) )
-
-/** Value to be written in RAM in EDMP_RAM_FEATURE_PRGM_RAM_BASE to jump to
- *  edmp_prgm_ram_dispatch_over_gaf.h entry point when this patch point is hit by EDMP */
-#define PATCH_KEY_OVER_GAF ( (uint32_t)0x000070f1 | \
-	                        ((uint32_t)(RAM_DISPATCH_OVER_GAF_PRGM_BASE & 0xFF00) << 8) | \
-	                        ((uint32_t)(RAM_DISPATCH_OVER_GAF_PRGM_BASE & 0x00FF) \
-	                        << 24) )
+#include "imu/inv_imu_edmp_ram_dispatch_defs.h"
 
 int inv_imu_edmp_b2s_init_over_sif(inv_imu_device_t *s, inv_imu_edmp_b2s_init_t *usecase)
 {
 	int status = INV_IMU_OK;
 
 	/* Load B2S RAM image over SIF data area, part of APEX set of default features */
-	const uint32_t patch_key = PATCH_KEY_OVER_SIF;
+	const uint32_t patch_key = RAM_DISPATCH_IMG_PATCH_KEY;
 	uint32_t       read_patch_key;
 	static uint8_t ram_loader_img[] = {
 #include "imu/edmp_prgm_ram_dispatch.h"
@@ -72,7 +59,7 @@ int inv_imu_edmp_b2s_init_over_gaf(inv_imu_device_t *s, inv_imu_edmp_b2s_init_t 
 	int status = INV_IMU_OK;
 
 	/* Load B2S RAM image over GAF data area, part of APEX set of default features */
-	const uint32_t patch_key = PATCH_KEY_OVER_GAF;
+	const uint32_t patch_key = RAM_DISPATCH_OVER_GAF_IMG_PATCH_KEY;
 	uint32_t       read_patch_key;
 	static uint8_t ram_loader_img[] = {
 #include "imu/edmp_prgm_ram_dispatch_over_gaf.h"
@@ -279,7 +266,7 @@ int inv_imu_edmp_aid_init_over_sif(inv_imu_device_t *s, inv_imu_edmp_aid_init_t 
 	int status = INV_IMU_OK;
 
 	/* Load AID RAM image over SIF data area, part of APEX set of default features */
-	const uint32_t patch_key = PATCH_KEY_OVER_SIF;
+	const uint32_t patch_key = RAM_DISPATCH_IMG_PATCH_KEY;
 	uint32_t       read_patch_key;
 	static uint8_t ram_loader_img[] = {
 #include "imu/edmp_prgm_ram_dispatch.h"
@@ -311,7 +298,7 @@ int inv_imu_edmp_aid_init_over_gaf(inv_imu_device_t *s, inv_imu_edmp_aid_init_t 
 	int status = INV_IMU_OK;
 
 	/* Load AID RAM image over GAF data area, part of APEX set of default features */
-	const uint32_t patch_key = PATCH_KEY_OVER_GAF;
+	const uint32_t patch_key = RAM_DISPATCH_OVER_GAF_IMG_PATCH_KEY;
 	uint32_t       read_patch_key;
 	static uint8_t ram_loader_img[] = {
 #include "imu/edmp_prgm_ram_dispatch_over_gaf.h"

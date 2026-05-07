@@ -449,7 +449,7 @@ extern "C" {
 
 /* gaf_config_gyr_bias_reject_th
  *
- * Gyro bias rejection threshold above which device is considered as moving. Threshold is compare against absolute value of delta between current estimated gyro bias and last estimated gyro bias in an analysis window.
+ * Gyro bias rejection threshold, expressed as an absolute value.
  * Unit: 2000dps = 2^30.
  * Default value: 3650722 (so 6.8dps)
  */

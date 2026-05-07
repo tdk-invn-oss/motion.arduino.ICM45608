@@ -164,7 +164,8 @@ struct aid_parameters_s {
 	uint8_t  aid_output_enable; /**< Bitwise enable output 
 									Unit is no unit, Bit 1 for enable activity detection, bit 2 for inactivity, bit 3 for alert
 									Default value 7, corresponding all output enable */
-	uint8_t  aid_disable_multiple_interrupt; /**< Option to disable output after each internal decision of algorithm
+	uint8_t
+	    aid_disable_multiple_interrupt; /**< Option to disable output after each internal decision of algorithm
 												means that output will trigger after each window time corresponding to updateWin
 												Unit is no unit, acceptable value is 0 or 1
 												Default value 0, corresponding to all decision are triggered */

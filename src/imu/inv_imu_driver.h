@@ -320,6 +320,12 @@ int inv_imu_select_accel_lp_clk(inv_imu_device_t *s, smc_control_0_accel_lp_clk_
  */
 void inv_imu_remap_data(int16_t data[3], const int8_t mmatrix[9]);
 
+/** @brief Apply a full s16q14 mounting matrix on input data
+ *  @param[in,out] data     16bit IMU data to be remapped.
+ *  @param[in]     mmatrix  Mounting matrix to be applied.
+ */
+void inv_imu_rotate_data(int16_t data[3], const int16_t mmatrix[9]);
+
 /** @brief Return driver version x.y.z-suffix as a char array
  *  @return  Driver version as char array "x.y.z-suffix"
  */

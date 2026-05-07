@@ -474,6 +474,10 @@ When the I2CM is in pass-through mode, the host on AP interface can access exter
 
 # Available Sketches
 
+**TwoIMU_FIFO_Interrupt**
+
+This sketch initializes the two ICM456xx sensors with the I2C interface and interrupt pin D2 and D3, and starts logging raw sensor data from eash IMU FIFO. Sensor data can be monitored on Serial monitor or Serial plotter
+
 **AUX_PassThrough**
 
 This sketch initializes the ICM456xx with the I2C interface, and running the AUX1 to I2CM Pass-Through mode. Register value from external sensor can be monitored on Serial monitor

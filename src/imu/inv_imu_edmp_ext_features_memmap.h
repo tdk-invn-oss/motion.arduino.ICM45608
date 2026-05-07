@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef __INV_IMU_EDMP_EXT_FEATURES_MEMMAP_H__
-#define __INV_IMU_EDMP_EXT_FEATURES_MEMMAP_H__
+#ifndef __INV_IMU_EDMP__EXT_FEATURES_MEMMAP_H__
+#define __INV_IMU_EDMP__EXT_FEATURES_MEMMAP_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -179,7 +179,7 @@ extern "C" {
  * Recommended value at 50Hz = 150
  * Recommended value at 25Hz = 75
  */
-#define EDMP_AID_WIN_HUMAN                                      0x1618
+#define EDMP_AID_WIN_HUMAN                                      0x1610
 #define EDMP_AID_WIN_HUMAN_SIZE                                 4
 
 /* aid_alert_human
@@ -191,7 +191,7 @@ extern "C" {
  * Recommended value at 50Hz = 90000
  * Recommended value at 25Hz = 45000
  */
-#define EDMP_AID_ALERT_HUMAN                                    0x161c
+#define EDMP_AID_ALERT_HUMAN                                    0x1614
 #define EDMP_AID_ALERT_HUMAN_SIZE                               4
 
 /* aid_en_output_human
@@ -200,7 +200,7 @@ extern "C" {
  * No Unit: bit 0 for enable activity detection, bit 1 for inactivity detection, bit 2 for alert
  * Default: 7 (all output enabled)
  */
-#define EDMP_AID_EN_OUTPUT_HUMAN                                0x1614
+#define EDMP_AID_EN_OUTPUT_HUMAN                                0x160c
 #define EDMP_AID_EN_OUTPUT_HUMAN_SIZE                           1
 
 /* aid_dis_multi_output_human
@@ -209,7 +209,7 @@ extern "C" {
  * No Unit: 1 to disable repetition of same state, 0 to enable repetition of same state after aid_win_human
  * Default: 0 (repetition enabled)
  */
-#define EDMP_AID_DIS_MULTI_OUTPUT_HUMAN                         0x1615
+#define EDMP_AID_DIS_MULTI_OUTPUT_HUMAN                         0x160d
 #define EDMP_AID_DIS_MULTI_OUTPUT_HUMAN_SIZE                    1
 
 /* aid_win_device
@@ -221,7 +221,7 @@ extern "C" {
  * Recommended value at 50Hz = 150
  * Recommended value at 25Hz = 75
  */
-#define EDMP_AID_WIN_DEVICE                                     0x163c
+#define EDMP_AID_WIN_DEVICE                                     0x1634
 #define EDMP_AID_WIN_DEVICE_SIZE                                4
 
 /* aid_alert_device
@@ -233,7 +233,7 @@ extern "C" {
  * Recommended value at 50Hz = 90000
  * Recommended value at 25Hz = 45000
  */
-#define EDMP_AID_ALERT_DEVICE                                   0x1640
+#define EDMP_AID_ALERT_DEVICE                                   0x1638
 #define EDMP_AID_ALERT_DEVICE_SIZE                              4
 
 /* aid_en_output_device
@@ -242,7 +242,7 @@ extern "C" {
  * No Unit: bit 0 for enable activity detection, bit 1 for inactivity detection, bit 2 for alert
  * Default: 7 (all output enabled)
  */
-#define EDMP_AID_EN_OUTPUT_DEVICE                               0x1638
+#define EDMP_AID_EN_OUTPUT_DEVICE                               0x1630
 #define EDMP_AID_EN_OUTPUT_DEVICE_SIZE                          1
 
 /* aid_dis_multi_output_device
@@ -251,7 +251,7 @@ extern "C" {
  * No Unit: 1 to disable repetition of same state, 0 to enable repetition of same state after aid_win_device
  * Default: 0 (repetition enabled)
  */
-#define EDMP_AID_DIS_MULTI_OUTPUT_DEVICE                        0x1639
+#define EDMP_AID_DIS_MULTI_OUTPUT_DEVICE                        0x1631
 #define EDMP_AID_DIS_MULTI_OUTPUT_DEVICE_SIZE                   1
 
 /* aid_human_output_state
@@ -259,7 +259,7 @@ extern "C" {
  * Decision taken by the AID algorithm for human instance
  * No unit: 1 when activity is detected, 2 when inactivity is detected, 6 when inactivity and sedentary alert are detected
  */
-#define EDMP_AID_HUMAN_OUTPUT_STATE                             0x1621
+#define EDMP_AID_HUMAN_OUTPUT_STATE                             0x1619
 #define EDMP_AID_HUMAN_OUTPUT_STATE_SIZE                        1
 
 /* aid_device_output_state
@@ -267,11 +267,11 @@ extern "C" {
  * Decision taken by the AID algorithm for device instance
  * No unit: 1 when activity is detected, 2 when inactivity is detected, 6 when inactivity and sedentary alert are detected
  */
-#define EDMP_AID_DEVICE_OUTPUT_STATE                            0x1645
+#define EDMP_AID_DEVICE_OUTPUT_STATE                            0x163d
 #define EDMP_AID_DEVICE_OUTPUT_STATE_SIZE                       1
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // __INV_IMU_EDMP_EXT_FEATURES_MEMMAP_H__
+#endif // __INV_IMU_EDMP__EXT_FEATURES_MEMMAP_H__
