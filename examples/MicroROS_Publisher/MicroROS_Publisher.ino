@@ -22,19 +22,7 @@
   Arduino library: micro_ros_arduino
   It publishes IMU orientation, accelerometer and gyroscope data from ICM456xx
   to microROS Agent.
-  
-  To get the data at 100Hz, please modify the serial interface speed in
-  micro_ros_arduino library: src\default_transport.cpp
-  
-  Update the baudrate parameter in `c Serial.begin()` API.
-  For example to 1Mbaud/s.
-  ```c
-    bool arduino_transport_open(struct uxrCustomTransport * transport)
-    {
-      Serial.begin(1000000);
-      return true;
-    }
-  ```
+
 */
 #include <micro_ros_arduino.h>
 
@@ -46,6 +34,8 @@
 #include <rclc/executor.h>
 
 #include <sensor_msgs/msg/imu.h>
+#include <micro_ros_utilities/type_utilities.h>
+#include <micro_ros_utilities/string_utilities.h>
 
 rcl_publisher_t publisher;
 sensor_msgs__msg__Imu imu_msg;
@@ -56,10 +46,17 @@ rcl_node_t node;
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){while(1);}}
 
+// Define GAF ODR = 100Hz
+#define GAF_ODR 100
 // Define Accel Full Scale Range = 16G
 #define ACCEL_FS 16
 // Define Gyro Full Scale Range = 2000 dps
 #define GYRO_FS 2000
+
+// ALGO_GRV, enable GRV when enable 6-axis(AG)  (GAF_ODR: 50/100/200/400Hz)
+// ALGO_GMRV, enable GMRV when enable 6-axis(AM)(GAF_ODR: 50/100/200Hz)
+// ALGO_RV, enable RV when enable 9-axis(AGM)   (GAF_ODR: 50/100/200Hz)
+uint8_t algo = ALGO_GRV;
 
 // Instantiate an ICM456xx with LSB address set to 0
 ICM456xx IMU(Wire,0);
@@ -73,22 +70,41 @@ void irq_handler(void) {
 }
 
 float_t convert_accel(int16_t raw, uint16_t fs) {
- return (float)raw * fs / INT16_MAX;
+ return (float)raw * fs * 9.80665 / INT16_MAX;
 }
 
 float_t convert_gyro(int16_t raw, uint16_t fs) {
  return ((float)raw * fs * PI) / (INT16_MAX * 180);
 }
 
+// Create our own transport function to change default serial speed from 115200 to 1000000
+bool arduino_mytransport_open(struct uxrCustomTransport * transport)
+{
+  Serial.begin(1000000);
+  return true;
+}
+
+
+static inline void set_microros_mytransports(){
+	rmw_uros_set_custom_transport(
+		true,
+		NULL,
+		arduino_mytransport_open,
+		arduino_transport_close,
+		arduino_transport_write,
+		arduino_transport_read
+	);
+}
+
 void setup() {
-  set_microros_transports();
+  set_microros_mytransports();
   delay(2000);
 
   // Initializing the IMU
   RCCHECK(IMU.begin());
 
   // Start GAF algo with interrupt on pin 2
-  IMU.startGaf(2,irq_handler,0);
+  IMU.startGaf(2, irq_handler, GAF_ODR, ACCEL_FS, GYRO_FS, algo);
 
   allocator = rcl_get_default_allocator();
   // create init_options
@@ -106,6 +122,9 @@ void setup() {
 
   // create executor
   RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
+  
+  // Configure Reference Frame Incetifier
+  imu_msg.header.frame_id = micro_ros_string_utilities_set(imu_msg.header.frame_id, "/imu_link0");
 }
 
 void loop() {
@@ -114,13 +133,22 @@ void loop() {
     irq_received = 0;
 
     int rc;
-    float W,X,Y,Z;
+    float W,X,Y,Z,heading_accuracy;
     inv_imu_sensor_data_t imu_data;
     struct timespec tv = {0};
     static uint32_t count = 0;
 
     // Read GAF orientation from FIFO
-    rc = IMU.getGaf_GRVData(W,X,Y,Z);
+    if (algo == ALGO_GRV)
+    {
+      IMU.getGaf_GRVData(W, X, Y, Z);
+    } else if (algo == ALGO_GMRV)
+    {
+      IMU.getGaf_GMRVData(W, X, Y, Z, heading_accuracy);
+    } else if (algo == ALGO_RV)
+    {
+      IMU.getGaf_RVData(W, X, Y, Z, heading_accuracy);
+    }
 
     // Read accel and gyro data from registers
     clock_gettime(0, &tv);

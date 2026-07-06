@@ -26,19 +26,33 @@
 //#define PRINT_MAG
 //#define PRINT_BIAS
 
+// Define GAF ODR = 100Hz
+#define GAF_ODR 100
+
+// Define Accel Full Scale Range = 16G
+#define ACCEL_FS 16
+// Define Gyro Full Scale Range = 2000 dps
+#define GYRO_FS 2000
+
+// ALGO_GRV, enable GRV when enable 6-axis(AG)  (GAF_ODR: 50/100/200/400Hz)
+// ALGO_GMRV, enable GMRV when enable 6-axis(AM)(GAF_ODR: 50/100/200Hz)
+// ALGO_RV, enable RV when enable 9-axis(AGM)   (GAF_ODR: 50/100/200Hz)
+uint8_t algo = ALGO_GRV;
+
 // Instantiate an ICM456XX with LSB address set to 0
 ICM456xx IMU(Wire, 0);
 
 uint8_t irq_received = 0;
-uint8_t algo = ALGO_GRV;
+unsigned long timestamp = 0;
 
 void irq_handler(void) {
   irq_received = 1;
+  timestamp = micros();
 }
 
 void setup() {
   int ret;
-  Serial.begin(115200);
+  Serial.begin(921600);
   while (!Serial) {}
 
   // Initializing the ICM456XX
@@ -50,11 +64,7 @@ void setup() {
       ;
   }
   // Start GAF algo with interrupt on pin 2
-  // ALGO_GRV, enable GRV when enable 6-axis(AG)
-  // ALGO_GMRV, enable GMRV when enable 6-axis(AM)
-  // ALGO_RV, enable RV when enable 9-axis(AGM)
-  algo = ALGO_GRV;
-  ret = IMU.startGaf(2, irq_handler, algo);
+  ret = IMU.startGaf(2, irq_handler, GAF_ODR, ACCEL_FS, GYRO_FS, algo);
   if (ret != 0) {
     Serial.print("GAF failed: ");
     Serial.println(ret);
@@ -70,7 +80,7 @@ void loop() {
   if (irq_received) {
     irq_received = 0;
 
-    float W, X, Y, Z, accuracy;
+    float W, X, Y, Z, heading_accuracy;
 
     if (algo == ALGO_GRV)
     {
@@ -78,29 +88,31 @@ void loop() {
       Serial.print("GRV ");
     } else if (algo == ALGO_GMRV)
     {
-      IMU.getGaf_GMRVData(W, X, Y, Z, accuracy);
+      IMU.getGaf_GMRVData(W, X, Y, Z, heading_accuracy);
       Serial.print("GMRV ");
     } else if (algo == ALGO_RV)
     {
-      IMU.getGaf_RVData(W, X, Y, Z, accuracy);
+      IMU.getGaf_RVData(W, X, Y, Z, heading_accuracy);
       Serial.print("RV ");
     }
-
-    Serial.print("W:");
+    Serial.print("Timestamp:");
+    Serial.print(timestamp);
+    Serial.print(",");
+    Serial.print("qw:");
     Serial.print(W);
     Serial.print(",");
-    Serial.print("X:");
+    Serial.print("qx:");
     Serial.print(X);
     Serial.print(",");
-    Serial.print("Y:");
+    Serial.print("qy:");
     Serial.print(Y);
     Serial.print(",");
-    Serial.print("Z:");
+    Serial.print("qz:");
     Serial.print(Z); 
     if (algo != ALGO_GRV){
       Serial.print(",");
-      Serial.print("Accuracy:");
-      Serial.print(accuracy);
+      Serial.print("HeadingAccuracy:");
+      Serial.print(heading_accuracy);
     }
     Serial.print(" ");
     
