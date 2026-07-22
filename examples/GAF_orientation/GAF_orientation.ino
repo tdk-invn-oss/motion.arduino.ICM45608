@@ -118,69 +118,85 @@ void loop() {
     
 #ifdef PRINT_BIAS
     int bx,by,bz,gaf_accuracy;
+    int rc;
     // Read bias(q16) and accuracy for gyro(GYRO), mag(MAG)
-    IMU.getGaf_BiasData(GYRO, bx, by, bz, gaf_accuracy);
-    Serial.print("Bias_X:");
-    Serial.print(bx);
-    Serial.print(",");
-    Serial.print("Bias_Y:");      
-    Serial.print(by);
-    Serial.print(",");
-    Serial.print("Bias_Z:");      
-    Serial.print(bz);
-    Serial.print(",");
-    Serial.print("Accuracy:");
-    Serial.print(gaf_accuracy);
-    Serial.print(" ");
+    rc = IMU.getGaf_BiasData(GYRO, bx, by, bz, gaf_accuracy);
+    if (rc == INV_ERROR_SUCCESS)
+    {
+      Serial.print("Bias_X:");
+      Serial.print(bx);
+      Serial.print(",");
+      Serial.print("Bias_Y:");      
+      Serial.print(by);
+      Serial.print(",");
+      Serial.print("Bias_Z:");      
+      Serial.print(bz);
+      Serial.print(",");
+      Serial.print("Accuracy:");
+      Serial.print(gaf_accuracy);
+      Serial.print(" ");
+    }
 #endif
 
 #ifdef PRINT_ACCEL
     {
       float accel_cal_x, accel_cal_y, accel_cal_z;
+      int rc;
       // Read accel data
-      IMU.getCalibratedAccel(accel_cal_x, accel_cal_y, accel_cal_z);
-      Serial.print("Cal_AccelX:");
-      Serial.print(accel_cal_x);
-      Serial.print(",");
-      Serial.print("Cal_AccelY:");
-      Serial.print(accel_cal_y);
-      Serial.print(",");
-      Serial.print("Cal_AccelZ:");
-      Serial.print(accel_cal_z);
-      Serial.print(" ");
+      rc = IMU.getCalibratedAccel(accel_cal_x, accel_cal_y, accel_cal_z);
+      if (rc == INV_ERROR_SUCCESS)
+      {
+        Serial.print("Cal_AccelX:");
+        Serial.print(accel_cal_x);
+        Serial.print(",");
+        Serial.print("Cal_AccelY:");
+        Serial.print(accel_cal_y);
+        Serial.print(",");
+        Serial.print("Cal_AccelZ:");
+        Serial.print(accel_cal_z);
+        Serial.print(" ");
+      }
     }
 #endif
 
 #ifdef PRINT_GYRO
     if (algo != ALGO_GMRV) {
       float gyro_cal_x, gyro_cal_y, gyro_cal_z;
+      int rc;
       // Read calibrated gyro data
-      IMU.getCalibratedGyro(gyro_cal_x, gyro_cal_y, gyro_cal_z);
-      Serial.print("Cal_GyroX:");
-      Serial.print(gyro_cal_x);
-      Serial.print(",");
-      Serial.print("Cal_GyroY:");      
-      Serial.print(gyro_cal_y);
-      Serial.print(",");
-      Serial.print("Cal_GyroZ:");      
-      Serial.print(gyro_cal_z);
-      Serial.print(" ");
+      rc = IMU.getCalibratedGyro(gyro_cal_x, gyro_cal_y, gyro_cal_z);
+      if (rc == INV_ERROR_SUCCESS)
+      {
+        Serial.print("Cal_GyroX:");
+        Serial.print(gyro_cal_x);
+        Serial.print(",");
+        Serial.print("Cal_GyroY:");      
+        Serial.print(gyro_cal_y);
+        Serial.print(",");
+        Serial.print("Cal_GyroZ:");      
+        Serial.print(gyro_cal_z);
+        Serial.print(" ");
+      }
     }
 #endif
 
 #ifdef PRINT_MAG
     if (algo == ALGO_GMRV || algo == ALGO_RV) {
       float mag_cal_x, mag_cal_y, mag_cal_z;
+      int rc;
       // Read calibrated mag data
-      IMU.getCalibratedMag(mag_cal_x, mag_cal_y, mag_cal_z);
-      Serial.print("Cal_MagX:");
-      Serial.print(mag_cal_x);
-      Serial.print(",");
-      Serial.print("Cal_MagY:");
-      Serial.print(mag_cal_y);
-      Serial.print(",");
-      Serial.print("Cal_MagZ:");
-      Serial.print(mag_cal_z);
+      rc = IMU.getCalibratedMag(mag_cal_x, mag_cal_y, mag_cal_z);
+      if (rc == INV_ERROR_SUCCESS)
+      {
+        Serial.print("Cal_MagX:");
+        Serial.print(mag_cal_x);
+        Serial.print(",");
+        Serial.print("Cal_MagY:");
+        Serial.print(mag_cal_y);
+        Serial.print(",");
+        Serial.print("Cal_MagZ:");
+        Serial.print(mag_cal_z);
+      }
     }
 #endif
     Serial.println("");
