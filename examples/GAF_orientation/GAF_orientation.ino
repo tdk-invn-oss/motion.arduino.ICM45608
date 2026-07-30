@@ -52,7 +52,7 @@ void irq_handler(void) {
 
 void setup() {
   int ret;
-  Serial.begin(921600);
+  Serial.begin(115200);
   while (!Serial) {}
 
   // Initializing the ICM456XX
