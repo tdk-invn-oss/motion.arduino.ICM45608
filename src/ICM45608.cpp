@@ -842,7 +842,7 @@ int ICM456xx::adv_getDataFromFifo(void)
   return 0;
 }
 
-#if (INV_DEVICE_TYPE != INV_TYPE_A2)
+#if (INV_DEVICE_TYPE != INV_TYPE_A1)
 static int inv_imu_edmp_compass_set_frequency(inv_imu_device_t *                  s,
                                        const dmp_ext_sen_odr_cfg_ext_odr_t frequency)
 {
@@ -864,7 +864,7 @@ static int inv_imu_edmp_compass_set_frequency(inv_imu_device_t *                
 
   return status;
 }
-#endif // INV_DEVICE_TYPE != INV_TYPE_A2
+#endif // INV_DEVICE_TYPE != INV_TYPE_A1
 
 int ICM456xx::setI2CM_FIFO(uint8_t intpin, ICM456xx_irq_handler handler)
 {
@@ -1017,8 +1017,6 @@ int ICM456xx::getExternalMagData(float *mag)
 
   return rc;
 }
-
-//#endif /* INV_TYPE_A1 */
 #endif /* INV_TYPE_A1 & INV_TYPE_C1 */
 
 /* FIFO sensor event callback */

@@ -17,7 +17,7 @@
  
 #include "ICM45608.h"
 
-// Instantiate an ICM456XX with LSB address set to 0
+// Instantiate an ICM456XX with SPI interface and CS on pin 8
 ICM456xx IMU(SPI,8);
 
 #define ACCEL_FSR_G    16			/* The accel FSR is 16g */
@@ -88,4 +88,3 @@ void loop() {
     Serial.print("MagZ:"); Serial.println(data[2]);
   }
 }
-
